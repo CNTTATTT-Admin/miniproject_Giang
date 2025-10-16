@@ -1,22 +1,16 @@
 package com.example.shopmohinh.service;
 
 import com.example.shopmohinh.dto.request.CategoryRequest;
-import com.example.shopmohinh.dto.request.PermissionRequest;
-import com.example.shopmohinh.dto.request.RoleRequest;
 import com.example.shopmohinh.dto.response.CategoryResponse;
-import com.example.shopmohinh.dto.response.PermissionResponse;
-import com.example.shopmohinh.dto.response.RoleResponse;
 import com.example.shopmohinh.dto.response.UserResponse;
 import com.example.shopmohinh.entity.Category;
-import com.example.shopmohinh.entity.Permission;
-import com.example.shopmohinh.entity.Role;
 import com.example.shopmohinh.entity.User;
 import com.example.shopmohinh.exception.AppException;
 import com.example.shopmohinh.exception.ErrorCode;
 import com.example.shopmohinh.mapper.CategoryMapper;
 import com.example.shopmohinh.mapper.UserMapper;
-import com.example.shopmohinh.repository.CategoryRepository;
-import com.example.shopmohinh.repository.UserRepository;
+import com.example.shopmohinh.repository.jpa.CategoryRepository;
+import com.example.shopmohinh.repository.jpa.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,7 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
 
 @Service

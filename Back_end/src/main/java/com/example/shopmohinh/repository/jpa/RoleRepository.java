@@ -1,8 +1,6 @@
-package com.example.shopmohinh.repository;
+package com.example.shopmohinh.repository.jpa;
 
-import com.example.shopmohinh.dto.response.RoleResponse;
 import com.example.shopmohinh.entity.Role;
-import com.example.shopmohinh.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

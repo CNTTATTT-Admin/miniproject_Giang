@@ -1,6 +1,5 @@
-package com.example.shopmohinh.repository;
+package com.example.shopmohinh.repository.jpa;
 
-import com.example.shopmohinh.entity.Product;
 import com.example.shopmohinh.entity.SizeEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

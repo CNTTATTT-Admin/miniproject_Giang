@@ -1,4 +1,4 @@
-package com.example.shopmohinh.repository;
+package com.example.shopmohinh.repository.jpa;
 
 import com.example.shopmohinh.dto.projection.ProductProjection;
 import com.example.shopmohinh.dto.search.ProductSearch;

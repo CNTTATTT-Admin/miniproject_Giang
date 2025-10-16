@@ -1,6 +1,5 @@
-package com.example.shopmohinh.repository;
+package com.example.shopmohinh.repository.jpa;
 
-import com.example.shopmohinh.dto.response.ImageResponse;
 import com.example.shopmohinh.entity.ImageEntity;
 import com.example.shopmohinh.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;

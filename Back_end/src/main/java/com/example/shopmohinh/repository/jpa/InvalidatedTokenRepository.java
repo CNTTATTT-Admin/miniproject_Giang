@@ -1,4 +1,4 @@
-package com.example.shopmohinh.repository;
+package com.example.shopmohinh.repository.jpa;
 
 import com.example.shopmohinh.entity.InvalidatedToken;
 import org.springframework.data.jpa.repository.JpaRepository;

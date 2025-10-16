@@ -1,6 +1,5 @@
 package com.example.shopmohinh.service.impl;
 
-import com.example.shopmohinh.constant.ActionTypeConstant;
 import com.example.shopmohinh.dto.request.ProductEventRequest;
 import com.example.shopmohinh.dto.response.ProductEventResponse;
 import com.example.shopmohinh.mapper.ProductEventMapper;
@@ -29,9 +28,7 @@ import static com.example.shopmohinh.util.ClientIpUtils.getClientIp;
 public class EventProducerServiceImpl implements EventProducerService {
     ProductEventMapper productEventMapper;
 
-    @Autowired
-    @Qualifier("taskExecutor")
-    private Executor executor;
+    Executor executor;
 
     KafkaTemplate<String, String> kafkaTemplate;
 
@@ -68,7 +65,7 @@ public class EventProducerServiceImpl implements EventProducerService {
                         //Character.getNumericValue(lastChar) chuyển kí tự số '0' - '9 thành số tương ứng'
                         partition = Character.getNumericValue(lastChar) % 3;
 
-                    //Character.isLetter(lastChar) → kiểm tra xem lastChar có phải là chữ cái (a–z, A–Z) hay không.
+                        //Character.isLetter(lastChar) → kiểm tra xem lastChar có phải là chữ cái (a–z, A–Z) hay không.
                     } else if (Character.isLetter(lastChar)) {
                         lastChar = Character.toLowerCase(lastChar);
 

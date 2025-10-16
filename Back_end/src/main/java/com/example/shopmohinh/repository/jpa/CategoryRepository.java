@@ -1,6 +1,5 @@
-package com.example.shopmohinh.repository;
+package com.example.shopmohinh.repository.jpa;
 
-import com.example.shopmohinh.dto.response.CategoryResponse;
 import com.example.shopmohinh.entity.Category;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

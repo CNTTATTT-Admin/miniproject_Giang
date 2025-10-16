@@ -8,12 +8,11 @@ import com.example.shopmohinh.dto.response.ProductResponse;
 import com.example.shopmohinh.dto.search.ProductSearch;
 import com.example.shopmohinh.entity.ImageEntity;
 import com.example.shopmohinh.entity.Product;
-import com.example.shopmohinh.entity.ProductSearchEntity;
 import com.example.shopmohinh.exception.AppException;
 import com.example.shopmohinh.exception.ErrorCode;
 import com.example.shopmohinh.mapper.ProductMapper;
-import com.example.shopmohinh.repository.ImageRepository;
-import com.example.shopmohinh.repository.ProductRepository;
+import com.example.shopmohinh.repository.jpa.ImageRepository;
+import com.example.shopmohinh.repository.jpa.ProductRepository;
 import com.example.shopmohinh.util.FileUploadUtil;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -49,8 +48,7 @@ public class ProductService {
 
     ImageRepository imageRepository;
 
-//    ProductSearchRepository searchRepository;
-
+//    ElasticSearchService elasticSearchService;
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
@@ -70,24 +68,14 @@ public class ProductService {
 
         product.setCreatedBy(userService.getMyInfo().getUsername());
 
-//        this.setSearchProducts(product);
-
         Product saveProduct = productRepository.save(product);
+
+//        elasticSearchService.saveSearchProducts(saveProduct);
 
         this.setImages(saveProduct, request.getImages());
 
         return productMapper.toProductResponse(saveProduct);
     }
-
-//    private void setSearchProducts(Product product){
-//        ProductSearchEntity productSearch = new ProductSearchEntity();
-//        productSearch.setCode(product.getCode());
-//        productSearch.setName(product.getName());
-//        productSearch.setStatus(product.getStatus());
-//        productSearch.setDescription(product.getDescription());
-//        productSearch.setCreatedDate(product.getCreatedDate());
-//        searchRepository.save(productSearch);
-//    }
 
     private void setImages(Product product, List<ImageRequest> requests) {
         if (requests == null || requests.isEmpty()) return;
@@ -141,14 +129,15 @@ public class ProductService {
 
         if (product != null) {
             product.setDeleted(false);
+//            elasticSearchService.delete(product);
         }
 
         return productMapper.toProductResponse(product);
 
     }
 
-    public ProductResponse update(String code, ProductRequest request) {
-        Product product = productRepository.findByCode(code).
+    public ProductResponse update(ProductRequest request) {
+        Product product = productRepository.findByCode(request.getCode()).
                 orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         productMapper.updateProduct(product, request);
@@ -162,6 +151,8 @@ public class ProductService {
         product.setUpdatedBy(userName);
 
         Product updateProduct = productRepository.save(product);
+
+//        elasticSearchService.updateByProjectSearch(updateProduct);
 
         this.setImages(updateProduct, request.getImages());
 

@@ -48,11 +48,11 @@ public class ProductController {
         return ApiResponse.<ProductResponse>builder().build();
     }
 
-    @PutMapping("/{code}")
-    public ApiResponse<ProductResponse> updateUser(@PathVariable("code") String code,
+    @PutMapping
+    public ApiResponse<ProductResponse> updateUser(
                                                 @RequestBody ProductRequest request) {
         return ApiResponse.<ProductResponse>builder()
-                .result(productService.update(code,request))
+                .result(productService.update(request))
                 .build();
 
     }
