@@ -26,7 +26,7 @@ import java.util.List;
 //Thay thế cho @Autowired
 //@RequiredArgsConstructor sẽ tự động tạo contructor của những method đc khai báo là final
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class CategoryService {
     CategoryRepository categoryRepository;
@@ -48,22 +48,22 @@ public class CategoryService {
         return userMapper.toUserResponse(user);
     }
 
-    public List<CategoryResponse> getAll(){
+    public List<CategoryResponse> getAll() {
 
         var category = categoryRepository.getAll();
 
         return category.stream().map(categoryMapper::toCategoryResponse).toList();
     }
 
-    public CategoryResponse create(CategoryRequest request){
+    public CategoryResponse create(CategoryRequest request) {
 
         Category category = categoryMapper.toCategory(request);
 
-        if(categoryRepository.getTop1()==null){
+        if (categoryRepository.getTop1() == null) {
             category.setCode("Cate1");
-        }else{
+        } else {
             String code = categoryRepository.getTop1().getCode();
-            category.setCode(code.substring(0,4)+((Integer.parseInt(code.substring(4)))+1));
+            category.setCode(code.substring(0, 4) + ((Integer.parseInt(code.substring(4))) + 1));
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -79,10 +79,10 @@ public class CategoryService {
         return categoryMapper.toCategoryResponse(category);
     }
 
-    public CategoryResponse delete(String code){
+    public CategoryResponse delete(String code) {
         Category category = categoryRepository.findByCode(code).
                 orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        if(category != null){
+        if (category != null) {
             category.setDeleted(false);
         }
         return categoryMapper.toCategoryResponse(category);
@@ -111,10 +111,12 @@ public class CategoryService {
 
         return category.stream().map(categoryMapper::toCategoryResponse).toList();
     }
+
     public Double getAllTotalPage() {
-        int totalPage=categoryRepository.getAllTotalPage().size();
-        return Math.ceil(totalPage/3.0);
+        int totalPage = categoryRepository.getAllTotalPage().size();
+        return Math.ceil(totalPage / 3.0);
     }
+
     public CategoryResponse findUser(Long id) {
         log.info("In method get category by id");
         return categoryMapper.toCategoryResponse(categoryRepository.findById(id).orElseThrow(
@@ -124,13 +126,13 @@ public class CategoryService {
 
     public List<CategoryResponse> findByAll(String name, String status, Pageable pageable) {
 
-        var category = categoryRepository.findByAll(name,status,pageable);
+        var category = categoryRepository.findByAll(name, status, pageable);
 
         return category.stream().map(categoryMapper::toCategoryResponse).toList();
     }
 
     public List<CategoryResponse> findAllTotalPage(String name, String status) {
-        var category = categoryRepository.findAllTotalPage(name,status);
+        var category = categoryRepository.findAllTotalPage(name, status);
         return category.stream().map(categoryMapper::toCategoryResponse).toList();
     }
 

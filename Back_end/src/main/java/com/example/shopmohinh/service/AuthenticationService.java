@@ -188,7 +188,7 @@ public class AuthenticationService {
                 //ID của token
                 .jwtID(UUID.randomUUID().toString())
                 //có thể tạo thêm claim custom
-                .claim("user ID", user.getId())
+                .claim("userID", user.getId())
                 //role của user
                 .claim("scope", buildScope(user))
                 .build();

@@ -1,5 +1,8 @@
 package com.example.shopmohinh.service;
 
+import com.example.shopmohinh.constant.RedisKey;
+import com.example.shopmohinh.dto.projection.CategoryTrendingProjection;
+import com.example.shopmohinh.dto.projection.ProductTrendingProjection;
 import com.example.shopmohinh.dto.projection.ProductProjection;
 import com.example.shopmohinh.dto.request.ImageRequest;
 import com.example.shopmohinh.dto.request.ProductRequest;
@@ -13,7 +16,11 @@ import com.example.shopmohinh.exception.ErrorCode;
 import com.example.shopmohinh.mapper.ProductMapper;
 import com.example.shopmohinh.repository.jpa.ImageRepository;
 import com.example.shopmohinh.repository.jpa.ProductRepository;
+import com.example.shopmohinh.repository.jpa.UserProductViewLogRepository;
+import com.example.shopmohinh.util.ClientIpUtils;
 import com.example.shopmohinh.util.FileUploadUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.NonNull;
@@ -23,13 +30,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.example.shopmohinh.constant.RedisKey.HISTORY_SEARCH_IP_ADDRESS;
+import static com.example.shopmohinh.constant.RedisKey.HISTORY_SEARCH_USER_ID;
 
 @Service
 //Thay thế cho @Autowired
@@ -48,7 +59,15 @@ public class ProductService {
 
     ImageRepository imageRepository;
 
-//    ElasticSearchService elasticSearchService;
+    ElasticSearchService elasticSearchService;
+
+    StringRedisTemplate redisTemplate;
+
+    ObjectMapper objectMapper;
+
+    HttpServletRequest httpServletRequest;
+
+    UserProductViewLogRepository userProductViewLogRepository;
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
@@ -70,7 +89,7 @@ public class ProductService {
 
         Product saveProduct = productRepository.save(product);
 
-//        elasticSearchService.saveSearchProducts(saveProduct);
+        elasticSearchService.saveSearchProducts(saveProduct);
 
         this.setImages(saveProduct, request.getImages());
 
@@ -98,11 +117,63 @@ public class ProductService {
 
     public Page<ProductResponse> getProduct(@NonNull ProductSearch request) {
 
+        String ip = ClientIpUtils.getClientIp(httpServletRequest);
+
+        this.saveSearchHistory(request, ip);
+
         Pageable pageable = PageRequest.of(request.getPageIndex() - 1, request.getPageSize());
 
         Page<ProductProjection> products = productRepository.getAll(request, pageable);
 
         return products.map(ProductResponse::new);
+    }
+
+    public List<String> getSearchHistory(Long userId, String ipAddress) {
+        String key;
+        if(userId != null) {
+            key = HISTORY_SEARCH_USER_ID + userId;
+        } else if(ipAddress != null) {
+            key = HISTORY_SEARCH_IP_ADDRESS + ipAddress;
+        } else {
+            return Collections.emptyList();
+        }
+
+        List<String> recentKeywords = redisTemplate.opsForList().range(key, 0, 7);
+        return recentKeywords != null ? recentKeywords : Collections.emptyList();
+    }
+
+    private void saveSearchHistory(ProductSearch request, String ipAddress) {
+        if(request.getKeyword() == null || request.getKeyword().isBlank()) return;
+
+        String key;
+        if(request.getUserId() != null) {
+            key = HISTORY_SEARCH_USER_ID + request.getUserId();
+        } else {
+            key = HISTORY_SEARCH_IP_ADDRESS + ipAddress;
+        }
+
+        // Xóa trùng
+        redisTemplate.opsForList().remove(key, 0, request.getKeyword());
+        // Thêm từ khóa mới vào đầu list
+        redisTemplate.opsForList().leftPush(key, request.getKeyword());
+        // Giữ tối đa 8 phần tử
+        redisTemplate.opsForList().trim(key, 0, 7);
+        // Optionally: set TTL
+        redisTemplate.expire(key, Duration.ofDays(7));
+    }
+
+    public boolean deleteSearchKeyword(Long userId, String ipAddress, String keyword) {
+        String key;
+        if (userId != null) {
+            key = HISTORY_SEARCH_USER_ID + userId;
+        } else if (ipAddress != null) {
+            key = HISTORY_SEARCH_IP_ADDRESS + ipAddress;
+        } else {
+            return false;
+        }
+
+        Long removed = redisTemplate.opsForList().remove(key, 0, keyword);
+        return removed != null && removed > 0;
     }
 
     public ProductResponse getDetailProduct(Long id) {
@@ -120,7 +191,48 @@ public class ProductService {
             response.setImages(imageResponses);
         }
 
+        try {
+            var currentUser = userService.getMyInfo(); // có thể null nếu chưa login
+            Long userId = currentUser != null ? currentUser.getId() : null;
+
+            this.recordView(
+                    product.getId(),
+                    product.getCategory().getId(),
+                    userId
+            );
+
+        } catch (Exception e) {
+            log.error("Error recording product view in Redis: {}", e.getMessage());
+        }
+
+
         return response;
+    }
+
+    public void recordView(Long productId, Long categoryId, Long userId) {
+        if (productId == null) {
+            log.warn("productId is null → skip");
+            return;
+        }
+
+        Map<String, Object> logItem = new HashMap<>();
+        logItem.put("userId", userId);
+        logItem.put("productId", productId);
+        logItem.put("categoryId", categoryId);
+        logItem.put("viewedAt", LocalDateTime.now().toString());
+        logItem.put("actionType", 1);                        // action_type = 1 = PRODUCT
+
+        try {
+            String redisKey = RedisKey.PRODUCT_LOG_KEY_PREFIX + productId;
+            String json = objectMapper.writeValueAsString(logItem);
+
+            // Push vào Redis list
+            redisTemplate.opsForList().rightPush(redisKey, json);
+
+            log.info("Recorded product view log in Redis for product {} (userId={})", productId, userId);
+        } catch (Exception e) {
+            log.error("Failed to record product view log in Redis: {}", e.getMessage(), e);
+        }
     }
 
     public ProductResponse delete(String code) {
@@ -129,7 +241,7 @@ public class ProductService {
 
         if (product != null) {
             product.setDeleted(false);
-//            elasticSearchService.delete(product);
+            elasticSearchService.delete(product);
         }
 
         return productMapper.toProductResponse(product);
@@ -152,10 +264,26 @@ public class ProductService {
 
         Product updateProduct = productRepository.save(product);
 
-//        elasticSearchService.updateByProjectSearch(updateProduct);
+        elasticSearchService.updateByProjectSearch(updateProduct);
 
         this.setImages(updateProduct, request.getImages());
 
         return productMapper.toProductResponse(updateProduct);
+    }
+
+    public List<ProductTrendingProjection> getProductTrendingOn7day() {
+        List<ProductTrendingProjection> productTrending = userProductViewLogRepository.getTop3ProductTrendingOn7day();
+        if(ObjectUtils.isEmpty(productTrending)){
+            return Collections.emptyList();
+        }
+        return productTrending;
+    }
+
+    public List<CategoryTrendingProjection> getCategoryTrending(Integer intervalDate) {
+        List<CategoryTrendingProjection> categoryTrending = userProductViewLogRepository.getTop5CategoryTrending(intervalDate);
+        if(ObjectUtils.isEmpty(categoryTrending)){
+            return Collections.emptyList();
+        }
+        return categoryTrending;
     }
 }

@@ -221,17 +221,6 @@ real-time-product-analytics/
 
 ---
 
-## 👨‍💻 Thành viên nhóm
-
-| Họ tên | Vai trò | Công việc chính |
-|--------|----------|----------------|
-| Giang | Backend Lead | Kafka, Redis, Scheduler |
-| Thành | Frontend Dev | Angular Dashboard |
-| Hương | Data Analyst | Thống kê & Elasticsearch |
-| Phúc | DevOps | Cấu hình Kafka, Redis, MySQL |
-
----
-
 ## 🧠 Kết quả mong đợi
 
 - Hệ thống realtime hoạt động ổn định.  
