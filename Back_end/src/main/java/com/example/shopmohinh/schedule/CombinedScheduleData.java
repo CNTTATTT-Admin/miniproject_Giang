@@ -70,7 +70,8 @@ public class CombinedScheduleData {
         }
     }
 
-    @Scheduled(fixedRate = 5 * 60 * 1000)
+
+    @Scheduled(cron = "0 0/5 * * * *")
     public void flushProductLogs() {
         try {
             Set<String> keys = redisTemplate.keys(RedisKey.PRODUCT_LOG_KEY_PREFIX + "*");

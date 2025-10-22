@@ -2,6 +2,7 @@ package com.example.shopmohinh.service.kafka;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.example.shopmohinh.dto.response.ProductEventResponse;
+import com.example.shopmohinh.dto.response.Top10KeywordsUpdateEvent;
 import com.example.shopmohinh.dto.response.Top10ProductsUpdateEvent;
 import com.example.shopmohinh.service.websocket.SocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -148,7 +149,7 @@ public class RealTimeConsumer {
             map.put("searchCount", Objects.requireNonNull(e.getScore()).longValue());
             return map;
         }).toList();
-        publisher.publishEvent(new Top10ProductsUpdateEvent(this, list));
+        publisher.publishEvent(new Top10KeywordsUpdateEvent(this, list));
     }
 
     public List<Map<String,Object>> getTop10ProductsList() {

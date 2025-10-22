@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.annotation.OnConnect;
 import com.corundumstudio.socketio.annotation.OnDisconnect;
+import com.example.shopmohinh.dto.response.Top10KeywordsUpdateEvent;
 import com.example.shopmohinh.dto.response.Top10ProductsUpdateEvent;
 import com.example.shopmohinh.service.kafka.RealTimeConsumer;
 import jakarta.annotation.PostConstruct;
@@ -58,8 +59,13 @@ public class SocketHandler {
     @EventListener
     public void handleTop10ProductsEvent(Top10ProductsUpdateEvent event) {
         broadcast("updateTop10Products", event.getTop10());
+    }
+
+    @EventListener
+    public void handleTop10KeywordsEvent(Top10KeywordsUpdateEvent event) {
         broadcast("updateTop10Keywords", event.getTop10());
     }
+
 
     @OnDisconnect
     public void onDisconnect(SocketIOClient client) {
